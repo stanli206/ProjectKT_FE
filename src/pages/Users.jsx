@@ -6,9 +6,20 @@ export default function Users() {
   const [employees, setEmployees] = useState([]);
   const [err, setErr] = useState("");
   const [msg, setMsg] = useState("");
+
+  // create form
   const [form, setForm] = useState({
     userName: "",
     employeeId: "",
+    role: "Employee",
+    plainPassword: ""
+  });
+
+  // edit modal state
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState({
+    userName: "",
     role: "Employee",
     plainPassword: ""
   });
@@ -17,8 +28,8 @@ export default function Users() {
     setErr(""); setMsg("");
     try {
       const [{ data: u }, { data: e }] = await Promise.all([
-        api.get("/users"),            // Admin-only list
-        api.get("/employees"),        // to pick employeeId
+        api.get("/users"),
+        api.get("/employees"),
       ]);
       setUsers(u || []);
       setEmployees(e || []);
@@ -57,14 +68,27 @@ export default function Users() {
     }
   };
 
-  const resetPwd = async (userId) => {
-    const pwd = prompt("Enter new password");
-    if (!pwd) return;
+  const openEdit = (u) => {
+    setEditingUser(u);
+    setEditForm({ userName: u.userName, role: u.role, plainPassword: "" });
+    setEditOpen(true);
+  };
+
+  const saveEdit = async (e) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setErr(""); setMsg("");
     try {
-      await api.put(`/users/profile/${userId}`, { plainPassword: pwd });
-      alert("Password updated");
+      // only send fields that have value; password optional
+      const payload = { userName: editForm.userName, role: editForm.role };
+      if (editForm.plainPassword?.trim()) payload.plainPassword = editForm.plainPassword.trim();
+      await api.put(`/users/profile/${editingUser.userId}`, payload);
+      setMsg("User updated");
+      setEditOpen(false);
+      setEditingUser(null);
+      load();
     } catch (e) {
-      alert(e?.response?.data?.message || "Failed");
+      setErr(e?.response?.data?.message || "Update failed");
     }
   };
 
@@ -80,44 +104,30 @@ export default function Users() {
       {err && <p className="text-red-600 text-sm">{err}</p>}
       {msg && <p className="text-green-700 text-sm">{msg}</p>}
 
-      {/* Create Form */}
-      <form onSubmit={create} className="p-4 rounded-2xl border bg-white grid sm:grid-cols-4 gap-3">
+      {/* Create Card */}
+      <form onSubmit={create} className="p-5 rounded-2xl bg-white shadow-sm grid sm:grid-cols-4 gap-3">
         <Field label="Username" value={form.userName} onChange={(v)=>setForm(s=>({...s, userName:v}))}/>
-        <label className="text-sm">
-          <span className="block text-gray-600">Employee</span>
-          <select
-            className="mt-1 w-full px-3 py-2 rounded-lg border"
-            value={form.employeeId}
-            onChange={(e)=>setForm(s=>({...s, employeeId:e.target.value}))}
-          >
-            <option value="">Select Employee</option>
-            {employees.map(emp => (
-              <option key={emp.employeeId} value={emp.employeeId}>
-                {emp.name} ({emp.employeeId})
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm">
-          <span className="block text-gray-600">Role</span>
-          <select
-            className="mt-1 w-full px-3 py-2 rounded-lg border"
-            value={form.role}
-            onChange={(e)=>setForm(s=>({...s, role:e.target.value}))}
-          >
-            <option>Employee</option>
-            <option>Principal</option>
-            <option>Admin</option>
-          </select>
-        </label>
+        <Select
+          label="Employee"
+          value={form.employeeId}
+          onChange={(v)=>setForm(s=>({...s, employeeId:v}))}
+          options={employees.map(emp => ({ value: emp.employeeId, label: `${emp.name} (${emp.employeeId})` }))}
+          placeholder="Select Employee"
+        />
+        <Select
+          label="Role"
+          value={form.role}
+          onChange={(v)=>setForm(s=>({...s, role:v}))}
+          options={[{value:"Employee",label:"Employee"},{value:"Principal",label:"Principal"},{value:"Admin",label:"Admin"}]}
+        />
         <Field label="Password" type="password" value={form.plainPassword} onChange={(v)=>setForm(s=>({...s, plainPassword:v}))}/>
         <div className="sm:col-span-4">
-          <button className="px-4 py-2 rounded-lg bg-black text-white">Create User</button>
+          <button className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white">Create User</button>
         </div>
       </form>
 
-      {/* Users Table */}
-      <div className="overflow-auto rounded-2xl border bg-white">
+      {/* Users Table (soft UI) */}
+      <div className="overflow-auto rounded-2xl bg-white shadow-sm">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="text-left border-b">
@@ -133,13 +143,16 @@ export default function Users() {
               const emp = employeesMap[u.employeeId];
               return (
                 <tr key={u.userId} className="border-b">
-                  <td className="py-2 pr-4">{u.userName} <span className="text-gray-500">({u.userId})</span></td>
+                  <td className="py-2 pr-4">
+                    <span className="font-medium">{u.userName}</span>{" "}
+                    <span className="text-gray-500">({u.userId})</span>
+                  </td>
                   <td className="py-2 pr-4">{u.role}</td>
-                  <td className="py-2 pr-4">{emp ? `${emp.name} • ${emp.personalEmail??""}` : u.employeeId}</td>
+                  <td className="py-2 pr-4">{emp ? `${emp.name} • ${emp.personalEmail ?? ""}` : u.employeeId}</td>
                   <td className="py-2 pr-4">{u.lastLogin ? new Date(u.lastLogin).toLocaleString() : "-"}</td>
-                  <td className="py-2 pr-4 flex gap-2">
-                    <button onClick={()=>resetPwd(u.userId)} className="px-3 py-1.5 rounded-lg border">Reset Pwd</button>
-                    <button onClick={()=>del(u.userId)} className="px-3 py-1.5 rounded-lg border">Delete</button>
+                  <td className="py-2 pr-4 flex flex-wrap gap-2">
+                    <button onClick={()=>openEdit(u)} className="px-3 py-1.5 rounded-lg bg-white shadow-sm hover:shadow">Edit</button>
+                    <button onClick={()=>del(u.userId)} className="px-3 py-1.5 rounded-lg bg-white shadow-sm hover:shadow">Delete</button>
                   </td>
                 </tr>
               );
@@ -150,20 +163,82 @@ export default function Users() {
           </tbody>
         </table>
       </div>
+
+      {/* Edit Modal */}
+      {editOpen && (
+        <Modal onClose={()=>{ setEditOpen(false); setEditingUser(null); }}>
+          <form onSubmit={saveEdit} className="space-y-4">
+            <h2 className="text-lg font-semibold">Edit User</h2>
+            <Field
+              label="Username"
+              value={editForm.userName}
+              onChange={(v)=>setEditForm(s=>({...s, userName:v}))}
+            />
+            <Select
+              label="Role"
+              value={editForm.role}
+              onChange={(v)=>setEditForm(s=>({...s, role:v}))}
+              options={[{value:"Employee",label:"Employee"},{value:"Principal",label:"Principal"},{value:"Admin",label:"Admin"}]}
+            />
+            <Field
+              label="New Password (optional)"
+              type="password"
+              value={editForm.plainPassword}
+              onChange={(v)=>setEditForm(s=>({...s, plainPassword:v}))}
+              placeholder="Leave blank to keep same"
+            />
+            <div className="flex items-center justify-end gap-2">
+              <button type="button" onClick={()=>{ setEditOpen(false); setEditingUser(null); }} className="px-3 py-1.5 rounded-lg bg-white shadow-sm">Cancel</button>
+              <button className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white">Save</button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }
 
-function Field({ label, value, onChange, type="text" }) {
+/* ---------- Small reusable inputs ---------- */
+function Field({ label, value, onChange, type="text", placeholder }) {
   return (
     <label className="text-sm w-full">
-      <span className="block text-gray-600">{label}</span>
+      <span className="block text-gray-700">{label}</span>
       <input
-        className="mt-1 w-full px-3 py-2 rounded-lg border"
+        className="mt-1 w-full px-3 py-2 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
         value={value}
         type={type}
+        placeholder={placeholder}
         onChange={(e)=>onChange(e.target.value)}
       />
     </label>
+  );
+}
+
+function Select({ label, value, onChange, options, placeholder = "Select" }) {
+  return (
+    <label className="text-sm w-full">
+      <span className="block text-gray-700">{label}</span>
+      <select
+        className="mt-1 w-full px-3 py-2 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+        value={value}
+        onChange={(e)=>onChange(e.target.value)}
+      >
+        <option value="">{placeholder}</option>
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function Modal({ children, onClose }) {
+  return (
+    <div className="fixed inset-0 z-30">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <div className="absolute inset-0 grid place-items-center p-4">
+        <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-lg">
+          {children}
+        </div>
+      </div>
+    </div>
   );
 }

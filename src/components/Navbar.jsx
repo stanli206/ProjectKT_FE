@@ -1,57 +1,3 @@
-// import { useAuth } from "../context/AuthContext";
-// import { Link } from "react-router-dom";
-
-// export default function Navbar() {
-//   const { user, logout } = useAuth();
-//   return (
-//     <div className="w-full border-b bg-white">
-//       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-//         <Link to="/" className="font-semibold">
-//           KT Timesheet
-//         </Link>
-//         {user && (
-//           <div className="flex items-center gap-3 text-sm">
-//             {user.role === "Admin" && <Link to="/users">Users</Link>}
-//             {["Admin", "Principal"].includes(user.role) && (
-//               <Link to="/projects">Projects</Link>
-//             )}
-//             {user.role === "Admin" && <Link to="/employees">Employees</Link>}
-//             {["Admin", "Principal"].includes(user.role) && (
-//               <Link to="/customers">Customers</Link>
-//             )}
-//             {["Admin", "Principal"].includes(user.role) && (
-//               <Link to="/approvals">Approvals</Link>
-//             )}
-//             {["Admin", "Principal"].includes(user.role) && (
-//               <Link to="/reports">Reports</Link>
-//             )}
-//             <Link to="/profile">Profile</Link>
-//           </div>
-//         )}
-//         <div className="flex items-center gap-4">
-//           {user && (
-//             <span className="text-sm text-gray-600">
-//               {user.userName} · {user.role}
-//             </span>
-//           )}
-//           {user ? (
-//             <button
-//               onClick={logout}
-//               className="px-3 py-1.5 rounded-lg bg-black text-white"
-//             >
-//               Logout
-//             </button>
-//           ) : (
-//             <Link to="/login" className="px-3 py-1.5 rounded-lg border">
-//               Login
-//             </Link>
-//           )}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 
@@ -66,10 +12,18 @@ export default function Navbar() {
     >
       <div>
         <div className="px-6 py-4 text-2xl font-bold border-b border-white/20">
-          <Link to="/">KT Timesheet</Link>
+          <Link to="/">EMS & Timesheet</Link>
         </div>
         {user && (
           <nav className="mt-6 flex flex-col gap-3 px-4 text-sm">
+            {user.role === "Admin" && (
+              <Link
+                className="hover:bg-white/20 rounded-lg px-3 py-2"
+                to="/admin"
+              >
+                Dashboard
+              </Link>
+            )}
             {user.role === "Admin" && (
               <Link
                 className="hover:bg-white/20 rounded-lg px-3 py-2"

@@ -7,7 +7,6 @@ import PrincipalDashboard from "./pages/PrincipalDashboard";
 import EmployeeTimesheet from "./pages/EmployeeTimesheet";
 import Projects from "./pages/Projects";
 import { useAuth } from "./context/AuthContext";
-
 import Users from "./pages/Users";
 import Employees from "./pages/Employees";
 import Customers from "./pages/Customers";
@@ -25,14 +24,20 @@ function HomeRedirect() {
 }
 
 export default function App() {
+  const { user } = useAuth(); //
+
   return (
     <BrowserRouter>
-      <Navbar />
-      <main className="ml-64 min-h-screen bg-gray-50 px-6 py-6">
+      {user && <Navbar />}
+
+      <main
+        className={`min-h-screen bg-gray-50 px-6 py-6 ${user ? "ml-64" : ""}`}
+      >
         <div className="max-w-6xl mx-auto px-4 py-6">
           <Routes>
             <Route path="/" element={<HomeRedirect />} />
             <Route path="/login" element={<Login />} />
+
             <Route
               path="/admin"
               element={
@@ -65,7 +70,6 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-
             <Route
               path="/employees"
               element={

@@ -1,12 +1,64 @@
-# React + Vite
+# Employee Timesheet / Management System (MERN + Tailwind)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A role‑based Employee Timesheet / Management System built with **MongoDB, Express, React, Node.js (ES Modules)** and **Tailwind CSS**. Employees can log hours per project/task; managers/admins can review, approve, and run reports.
 
-Currently, two official plugins are available:
+> **Note:** Frontend uses **React Context API** (no Redux) and React Router for auth/role redirects. Backend uses JWT auth, cookies (optional), and MongoDB with Mongoose.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## ✨ Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**Authentication & Roles**
+
+* JWT‑based login, register, logout
+* Roles: `employee`, `manager`, `admin`
+* Role‑based routing: admins auto‑redirect to Admin Dashboard after login
+---
+## 🧱 Tech Stack
+
+* **Frontend:** React, Vite/CRA, Tailwind CSS, React Router, Context API, Axios
+* **Backend:** Node.js ("type": "module"), Express.js, Mongoose
+* **Database:** MongoDB
+* **Auth:** JWT
+  
+---
+## 🔐 Environment Variables
+
+Create **`server/.env`**:
+
+```
+MONGODB_URL=your DB connection string....
+JWT_SECRET=..
+PORT=your port
+JWT_EXPIRES_IN=..
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your gmail
+SMTP_PASS=..
+ADMIN_EMAIL=your gmail
+
+```
+
+Create **`client/.env`**:
+
+```
+VITE_API_URL=http:your url..
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1) Clone & Install
+
+```
+# root
+git clone <repo-url> employee-timesheet
+cd employee-timesheet
+
+# server
+cd server && npm install && cd ..
+
+# client
+cd client && npm install && cd ..
+```
